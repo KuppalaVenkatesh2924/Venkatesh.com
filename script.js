@@ -1,8 +1,8 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const box = 25; // size of each grid block
-let snake, direction, food, score, game;
+const box = 25;
+let snake, direction, food, score;
 
 // Initialize game
 function initGame() {
@@ -10,9 +10,8 @@ function initGame() {
   direction = null;
   food = randomFood();
   score = 0;
-  document.getElementById("score").innerText = "Score: 0";
-  clearInterval(game);
-  drawGame(); // draw first frame
+  drawGame(); // Draw initial frame
+  document.getElementById("score").innerText = "Score: " + score;
 }
 
 // Random food generator
@@ -23,16 +22,6 @@ function randomFood() {
   };
 }
 
-// Start and Restart
-document.getElementById("start").addEventListener("click", () => {
-  clearInterval(game);
-  game = setInterval(drawGame, 120);
-});
-document.getElementById("restart").addEventListener("click", () => {
-  initGame();
-  game = setInterval(drawGame, 120);
-});
-
 // Keyboard controls
 document.addEventListener("keydown", (event) => changeDirection(event.key));
 
@@ -42,12 +31,14 @@ document.getElementById("down").addEventListener("click", () => changeDirection(
 document.getElementById("left").addEventListener("click", () => changeDirection("ArrowLeft"));
 document.getElementById("right").addEventListener("click", () => changeDirection("ArrowRight"));
 
-// Change direction
+// Change direction and move snake manually
 function changeDirection(key) {
   if ((key === "ArrowLeft") && direction !== "RIGHT") direction = "LEFT";
   if ((key === "ArrowUp") && direction !== "DOWN") direction = "UP";
   if ((key === "ArrowRight") && direction !== "LEFT") direction = "RIGHT";
   if ((key === "ArrowDown") && direction !== "UP") direction = "DOWN";
+  
+  moveSnake(); // Move snake on every key press
 }
 
 // Draw snake with gradient
@@ -63,7 +54,7 @@ function drawSnake() {
   }
 }
 
-// Draw food with pattern
+// Draw food
 function drawFood() {
   let gradient = ctx.createRadialGradient(food.x + box/2, food.y + box/2, 5, food.x + box/2, food.y + box/2, box/2);
   gradient.addColorStop(0, "#ff0000");
@@ -72,7 +63,7 @@ function drawFood() {
   ctx.fillRect(food.x, food.y, box, box);
 }
 
-// Draw background grid pattern
+// Draw background grid
 function drawBackground() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -84,7 +75,7 @@ function drawBackground() {
   }
 }
 
-// Collision check
+// Check collision
 function collision(head, array) {
   for (let i = 0; i < array.length; i++) {
     if (head.x === array[i].x && head.y === array[i].y) return true;
@@ -92,17 +83,17 @@ function collision(head, array) {
   return false;
 }
 
-// Main draw function
-function drawGame() {
+// Move snake manually
+function moveSnake() {
   drawBackground();
   drawSnake();
   drawFood();
 
-  // Old head position
+  if (!direction) return; // Do not move if no direction selected
+
   let snakeX = snake[0].x;
   let snakeY = snake[0].y;
 
-  // Move snake
   if (direction === "LEFT") snakeX -= box;
   if (direction === "UP") snakeY -= box;
   if (direction === "RIGHT") snakeX += box;
@@ -116,17 +107,18 @@ function drawGame() {
     snake.pop();
   }
 
-  // New head
   let newHead = { x: snakeX, y: snakeY };
 
-  // Game Over
+  // Game over
   if (snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead, snake)) {
-    clearInterval(game);
     alert("Game Over! Score: " + score);
+    initGame();
     return;
   }
 
   snake.unshift(newHead);
-
   document.getElementById("score").innerText = "Score: " + score;
 }
+
+// Initialize game on page load
+initGame();
